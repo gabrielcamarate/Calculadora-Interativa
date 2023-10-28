@@ -5,6 +5,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+// Caracteres que formam uma caixa (linha 10 até a linha 17)
 // Quinas
 #define TOP_RIGHT "\u2510"
 #define TOP_LEFT "\u250C"
@@ -27,25 +28,43 @@
 // Tamanho da calculadora (minimo)
 #define HEIGHT_DEFAULT 22
 #define WIDITH_DEFAULT 34
-#define STR_CMP(x, y) (strcmp(x[i][j], y) == 0) // Macro de comparação
 
+#define STR_CMP(x, y) (strcmp(x[i][j], y) == 0) // Macro de comparação
 #define MAX_CHARACTERS 100
 
-WINDOW *calculatorCase;
-
-// Prototipos
+// Assets
+void allocateMemory();
+void showErrors(const char *message);
 void removeSpaces(char *originalString, int length);
 
+// Criação das caixas
 void topRow(int width, int height, int startY, int startX);
 void middleRow(int width, int height, char *character, int startY, int startX);
-void loweRow(int width, int height, int startY, int startX);
+void lowerRow(int width, int height, int startY, int startX);
 void createDisplay(int width, int height, int startY, int startX);
 void createBox(int width, int height, char *character, int startY, int startX);
+
+// Criação da interface
 void menuWindow();
+
+// Operações matematicas
+void sum();
+void subtraction();
+void division();
+void multiplication();
+
+// Variaveis para manipulçação das operações
+char characterOperator[1];
+int countCharacters = 0;
+char *characters = NULL;
+WINDOW *calculatorCase;
+int result = 0;
+
 
 int main(int argc, char const *argv[])
 {
     setlocale(LC_ALL, "");
+    allocateMemory();
 
     // Iniciando a Tela (terminal)
     initscr();
@@ -83,8 +102,75 @@ int main(int argc, char const *argv[])
     return 0;
 }
 
-char characterOperator[1];
+// ASSETS
+void showErrors(const char *message)
+{
+    system("clear");
+    fprintf(stderr, "%s\n", message);
+    exit(1);
+}
 
+void allocateMemory()
+{
+    characters = (char *) malloc(MAX_CHARACTERS * sizeof(char));
+    if (characters == NULL)
+    {
+        showErrors("Memory allocation failure.");
+    }
+}
+
+void removeSpaces(char *originalString, int length)
+{
+    char *source = originalString;
+    char *destination = originalString;
+    while (*source && length > 0)
+    {
+        if (*source != ' ')
+        {
+            *destination = *source;
+            destination++;
+        }
+        source++;
+        length--;
+    }
+    *destination = '\0';
+}
+
+// Operações matematicas
+void sum()
+{
+    int number = atoi(characters);
+    result += number;
+
+    for (int i = 0; i < strlen(characters); i++){characters[i] = ' ';}
+    countCharacters = 0;
+}
+
+void subtraction()
+{
+    int number = atoi(characters);
+    result = result - number;
+    for (int i = 0; i < strlen(characters); i++){characters[i] = ' ';}
+    countCharacters = 0;
+}
+
+void multiplication()
+{
+    int number = atoi(characters);
+    result = number * result;
+    for (int i = 0; i < strlen(characters); i++){characters[i] = ' ';}
+    countCharacters = 0;
+}
+
+void division()
+{
+    int number = atoi(characters);
+    result = result / number;
+    for (int i = 0; i < strlen(characters); i++){characters[i] = ' ';}
+    countCharacters = 0;
+}
+
+// Criação da interface
 void menuWindow()
 {
     char *buttons[5][4] =
@@ -100,11 +186,10 @@ void menuWindow()
 
     int startX_enter = WIDITH_DEFAULT - 4;
 
-    int startY_enter = 3, countCharacters = 0, result = 0, countCharactersDisplay = 0, defaultLoop = 0;
+    int startY_enter = 3, countCharactersDisplay = 0, defaultLoop = 0;
 
     char charactersTEMP[1];
 
-    char *characters = malloc(MAX_CHARACTERS * sizeof(char));
     char *charactersDisplay = malloc(MAX_CHARACTERS * sizeof(char));
 
     while (1)
@@ -206,8 +291,6 @@ void menuWindow()
                 defaultLoop = 0;
             }
 
-            mvwprintw(calculatorCase, 1, 1, "startX - %i", startX_enter);
-
             // Lógica para os digitos aparecerem na tela.
             if (isdigit(charactersTEMP[0]))
             {
@@ -234,19 +317,16 @@ void menuWindow()
             // Lógica quando o operador '+' é pressionado
             if (charactersTEMP[0] == '+')
             {
-                int number = atoi(characters);
-                result += number;
-
+                sum();
                 characterOperator[0] = '+';
-                for (int i = 0; i < strlen(characters); i++) {characters[i] = ' ';}
-                countCharacters = 0;
             }
 
             // Lógica quando o operador '-' é pressionado
             if (charactersTEMP[0] == '-')
             {
                 int number = atoi(characters);
-                result = number;
+                if (number != 0) {result = number;}
+                mvwprintw(calculatorCase, 1, 1, "%i", number);
 
                 characterOperator[0] = '-';
                 for (int i = 0; i < strlen(characters); i++){characters[i] = ' ';}
@@ -257,7 +337,6 @@ void menuWindow()
             if (charactersTEMP[0] == 'x')
             {
                 int number = atoi(characters);
-                mvwprintw(calculatorCase, 5, 1, "%i", number);
                 if (number != 0) {result = number;}
 
                 characterOperator[0] = '*';
@@ -285,54 +364,20 @@ void menuWindow()
                     count++;
                 }
 
-                for (int i = 0; i < strlen(charactersDisplay); i++) {charactersDisplay[i] = ' ';}
-                for (int i = 0; i < strlen(characters); i++) {characters[i] = ' ';}
+                for (int i = 0; i < strlen(charactersDisplay); i++) charactersDisplay[i] = ' ';
+                for (int i = 0; i < strlen(characters); i++) characters[i] = ' ';
                 countCharacters = 0;
             }
 
             // Lógica quando o operador '=' é pressionado
             else if (charactersTEMP[0] == '=')
             {
-                mvwprintw(calculatorCase, 5, 15, "op test - %s", characterOperator);
-
-            
                 int count = 2;
-                // Operação de soma
-                if (characterOperator[0] == '+')
-                {
-                    int number = atoi(characters);
-                    result += number;
 
-                    for (int i = 0; i < strlen(characters); i++){characters[i] = ' ';}
-                    countCharacters = 0;
-                }
-
-                // Operação de Subtração
-                else if (characterOperator[0] == '-')
-                {
-                    int number = atoi(characters);
-                    result = result - number;
-                    for (int i = ; i < strlen(characters); i++){characters[i] = ' ';}
-                    countCharacters = 0;
-                }
-
-                // Operação de Multiplicação
-                else if (characterOperator[0] == '*')
-                {
-                    int number = atoi(characters);
-                    result = number * result;
-                    for (int i = 0; i < strlen(characters); i++){characters[i] = ' ';}
-                    countCharacters = 0;
-                }
-
-                // Operação de Divisão
-                else if (characterOperator[0] == '/')
-                {
-                    int number = atoi(characters);
-                    result = result / number;
-                    for (int i = 0; i < strlen(characters); i++){characters[i] = ' ';}
-                    countCharacters = 0;
-                }
+                if (characterOperator[0] == '+') sum();
+                else if (characterOperator[0] == '-') subtraction();
+                else if (characterOperator[0] == '*') multiplication();
+                else if (characterOperator[0] == '/') division();
 
                 int arr[] = {9, 99, 999, 9999, 99999, 999999, 9999999, 99999999, 999999999}, numberOptions = sizeof(arr) / sizeof(arr[0]);
 
@@ -366,38 +411,20 @@ void menuWindow()
     }
 }
 
-
-/* Recomendavel não alterar nada nas funções. */
-void removeSpaces(char *originalString, int length)
-{
-    char *source = originalString;
-    char *destination = originalString;
-    while (*source && length > 0)
-    {
-        if (*source != ' ')
-        {
-            *destination = *source;
-            destination++;
-        }
-        source++;
-        length--;
-    }
-    *destination = '\0';
-}
-
+// Criação das caixas
 void createDisplay(int width, int height, int startY, int startX)
 {
     topRow(width, height, startY, startX);
     mvwprintw(calculatorCase, startY + 1, startX, "x");
     mvwprintw(calculatorCase, startY + 1, WIDITH_DEFAULT - 2, "x");
-    loweRow(width, height, startY, startX);
+    lowerRow(width, height, startY, startX);
 }
 
 void createBox(int width, int height, char *character, int startY, int startX)
 {
     topRow(width, height, startY, startX);
     middleRow(width, height, character, startY, startX);
-    loweRow(width, height, startY, startX);
+    lowerRow(width, height, startY, startX);
 }
 
 void topRow(int width, int height, int startY, int startX)
@@ -448,7 +475,7 @@ void middleRow(int width, int height, char *character, int startY, int startX)
     }
 }
 
-void loweRow(int width, int height, int startY, int startX)
+void lowerRow(int width, int height, int startY, int startX)
 {
     int count = 0;
     startY += 2;
