@@ -5,104 +5,64 @@
 #include <stdlib.h>
 #include <string.h>
 
-// Caracteres que formam uma caixa (linha 10 até a linha 17)
-// Quinas
-#define TOP_RIGHT "\u2510"
-#define TOP_LEFT "\u250C"
-#define LOWER_LEFT "\u2514"
-#define LOWER_RIGHT "\u2518"
-
-// Prenchemento
-#define VERTICAL_LINE "\u2502"
-#define HORIZONTAL_LINE "\u2500"
-
-// Quantidade de colunas da calculadora (y)
-#define CALCULATOR_COLUMN 5
-
-// Quantidade de linhas da calculadora  (x)
-#define CALCULATOR_LINE 4
-
-// Tamanho do botão (minimo)
-#define HEIGHT_BUTTON 1
-
-// Tamanho da calculadora (minimo)
-#define HEIGHT_DEFAULT 22
-#define WIDITH_DEFAULT 34
-
-#define STR_CMP(x, y) (strcmp(x[i][j], y) == 0) // Macro de comparação
-#define MAX_CHARACTERS 100
-
-// Assets
-void allocateMemory();
-void showErrors(const char *message);
-void removeSpaces(char *originalString, int length);
-
-// Criação das caixas
-void topRow(int width, int height, int startY, int startX);
-void middleRow(int width, int height, char *character, int startY, int startX);
-void lowerRow(int width, int height, int startY, int startX);
-void createDisplay(int width, int height, int startY, int startX);
-void createBox(int width, int height, char *character, int startY, int startX);
-
-// Criação da interface
-void menuWindow();
-
-// Operações matematicas
-void sum();
-void subtraction();
-void division();
-void multiplication();
+#include "calculadora.h"
+#include "calculadora.h"
 
 // Variaveis para manipulçação das operações
 char characterOperator[1];
 int countCharacters = 0;
 char *characters = NULL;
-WINDOW *calculatorCase;
+char *charactersDisplay = NULL;
 int result = 0;
+
+// Definição dos botões da calculadora
+char *buttons[BUTTON_ROWS][BUTTON_COLUMNS] =
+    {
+        {"0", ",", "=", ""},
+        {"1", "2", "3", "+"},
+        {"4", "5", "6", "-"},
+        {"7", "8", "9", "x"},
+        {"C", "<", "%", "/"}
+    };
+
+// Variaveis principais
+WINDOW *calculatorCase;
 
 
 int main(int argc, char const *argv[])
 {
     setlocale(LC_ALL, "");
-    allocateMemory();
+    characters = allocateMemory();
+    charactersDisplay = allocateMemory();
 
-    // Iniciando a Tela (terminal)
-    initscr();
-    cbreak();
-    curs_set(FALSE); // Não mostra o cursor
-
+    initialize();
     int yMax, xMax;
-    getmaxyx(stdscr, yMax, xMax); // Recebendo o tamanho do terminal aberta
+    getmaxyx(stdscr, yMax, xMax);
 
-    if (!has_colors()) // Verificando se o terminal do Usuario tem suporte para cores
+    if (!has_colors())
     {
         printw("Seu terminal não suporta cores, sua experiência não será completa. [:-(");
         mvprintw(1, 0, "Pressione qualquer tecla para continuar...");
         getch();
         clear();
     }
-    start_color(); // Iniciando as cores
-
-    // Criando a interface da calculadora
-    int start_Y = (yMax / 2) - HEIGHT_DEFAULT / 2;
-    int start_X = (xMax / 2) - WIDITH_DEFAULT / 2;
-
-    calculatorCase = newwin(HEIGHT_DEFAULT, WIDITH_DEFAULT + 1, start_Y, start_X);
-    box(calculatorCase, 0, 0);
-    refresh();
-    wrefresh(calculatorCase);
-
-    keypad(calculatorCase, true);
+    start_color();
+    drawCalculatorCase(yMax, xMax);
 
     menuWindow();
-    // Aguardando proximo caracter
-    char number = getch();
     endwin();
 
     return 0;
 }
 
 // ASSETS
+void initialize()
+{
+    initscr();
+    cbreak();
+    curs_set(FALSE); // Não mostra o cursor
+}
+
 void showErrors(const char *message)
 {
     system("clear");
@@ -110,13 +70,11 @@ void showErrors(const char *message)
     exit(1);
 }
 
-void allocateMemory()
+char *allocateMemory()
 {
-    characters = (char *) malloc(MAX_CHARACTERS * sizeof(char));
-    if (characters == NULL)
-    {
-        showErrors("Memory allocation failure.");
-    }
+    char *temp = (char *) malloc(MAX_CHARACTERS * sizeof(char));
+    if (temp == NULL) showErrors("Memory allocation failure.");
+    return temp;
 }
 
 void removeSpaces(char *originalString, int length)
@@ -171,99 +129,71 @@ void division()
 }
 
 // Criação da interface
+void drawCalculatorCase(int yMax, int xMax)
+{
+    int start_Y = (yMax / 2) - HEIGHT_DEFAULT / 2;
+    int start_X = (xMax / 2) - WIDITH_DEFAULT / 2;
+
+    calculatorCase = newwin(HEIGHT_DEFAULT, WIDITH_DEFAULT + 1, start_Y, start_X);
+    box(calculatorCase, 0, 0);
+    refresh();
+    wrefresh(calculatorCase);
+
+    keypad(calculatorCase, true);
+}
+
+// Criação dos botões
+void drawCalculatorButtons(int *widthButton, int *startY, int *startX, int *line, int *column)
+{
+    for (int i = 0; i < BUTTON_ROWS; i++)
+    {
+        for (int j = 0; j < BUTTON_COLUMNS; j++)
+        {
+            if (!STR_CMP(buttons, ""))
+            {
+                if ((*column) == 3 && (*line) == 0) (*column) = 2;
+                (*widthButton) = (STR_CMP(buttons, "0")) ? (WIDITH_DEFAULT - 3) / 2 : (WIDITH_DEFAULT - 3) / 4;
+
+                if (i == (*line) && j == (*column)) wattron(calculatorCase, A_REVERSE);
+
+                createBox((*widthButton), HEIGHT_BUTTON, buttons[i][j], (*startY), (*startX));
+
+                if (i == (*line) && j == (*column)) wattroff(calculatorCase, A_REVERSE);
+                (*startX) += (*widthButton) + 1;
+            }
+        }
+        (*startY) -= 3;
+        (*startX) = 2;
+    }
+    (*startY)--;
+}
+
 void menuWindow()
 {
-    char *buttons[5][4] =
-    {
-        {"0", ",", "=", ""},
-        {"1", "2", "3", "+"},
-        {"4", "5", "6", "-"},
-        {"7", "8", "9", "x"},
-        {"C", "<", "%", "/"}
-    };
-
-    int keyPressed, line = 0, column = 0;
-
+    int keyPressed;
+    int line = 0;
+    int column = 0;
     int startX_enter = WIDITH_DEFAULT - 4;
+    int startY_enter = 3
 
-    int startY_enter = 3, countCharactersDisplay = 0, defaultLoop = 0;
-
+    int countCharactersDisplay = 0;
+    int defaultLoop = 0;
     char charactersTEMP[1];
-
-    char *charactersDisplay = malloc(MAX_CHARACTERS * sizeof(char));
 
     while (1)
     {
         int startY = (HEIGHT_DEFAULT - 4), startX = 2;
         int widthButton;
 
-        for (int i = 0; i < 5; i++)
-        {
-            for (int j = 0; j < 4; j++)
-            {
-                if (!STR_CMP(buttons, ""))
-                {
-                    if (column == 3 && line == 0)
-                        column = 2;
-                    widthButton = (STR_CMP(buttons, "0")) ? (WIDITH_DEFAULT - 3) / 2 : (WIDITH_DEFAULT - 3) / 4;
+        drawCalculatorButtons(&widthButton, &startY, &startX, &line, &column);
 
-                    if (i == line && j == column)
-                        wattron(calculatorCase, A_REVERSE);
-                    createBox(widthButton, HEIGHT_BUTTON, buttons[i][j], startY, startX);
-                    if (i == line && j == column)
-                        wattroff(calculatorCase, A_REVERSE);
-                    startX += widthButton + 1;
-                }
-            }
-            startY -= 3;
-            startX = 2;
-        }
-        startY--;
         int lengthDisplay = WIDITH_DEFAULT - 3;
+
         createDisplay(lengthDisplay, HEIGHT_BUTTON, startY, startX);
         wrefresh(calculatorCase);
 
         keyPressed = wgetch(calculatorCase);
-        switch (keyPressed)
-        {
-            case KEY_RIGHT:
-                column++;
-                if (line == 0 && column == 3)
-                    column = 2;
-                if (column == 4)
-                    column = 3;
-                break;
-
-            case KEY_LEFT:
-                column--;
-                if (column == -1)
-                    column = 0;
-                break;
-
-            case KEY_UP:
-                if (column == 2 && line == 0)
-                    column = 3;
-                if (column == 1 && line == 0)
-                    column = 2;
-                line++;
-
-                if (line == 5)
-                    line = 4;
-                break;
-
-            case KEY_DOWN:
-                if (column == 1 && line == 1)
-                    column = 0;
-                if (column == 2 && line == 1)
-                    column = 1;
-                line--;
-                if (line == -1)
-                    line = 0;
-                break;
-
-            default:
-                break;
-        }
+        processKeypress(keyPressed, &line, &column);
 
         charactersTEMP[0] = buttons[line][column][0];
         charactersTEMP[1] = '\0';
@@ -325,7 +255,7 @@ void menuWindow()
             if (charactersTEMP[0] == '-')
             {
                 int number = atoi(characters);
-                if (number != 0) {result = number;}
+                result = number;
                 mvwprintw(calculatorCase, 1, 1, "%i", number);
 
                 characterOperator[0] = '-';
@@ -337,6 +267,7 @@ void menuWindow()
             if (charactersTEMP[0] == 'x')
             {
                 int number = atoi(characters);
+                mvwprintw(calculatorCase, 5, 1, "%i", number);
                 if (number != 0) {result = number;}
 
                 characterOperator[0] = '*';
@@ -364,8 +295,8 @@ void menuWindow()
                     count++;
                 }
 
-                for (int i = 0; i < strlen(charactersDisplay); i++) charactersDisplay[i] = ' ';
-                for (int i = 0; i < strlen(characters); i++) characters[i] = ' ';
+                for (int i = 0; i < strlen(charactersDisplay); i++) {charactersDisplay[i] = ' ';}
+                for (int i = 0; i < strlen(characters); i++) {characters[i] = ' ';}
                 countCharacters = 0;
             }
 
@@ -410,6 +341,49 @@ void menuWindow()
         }
     }
 }
+
+// Processamento
+
+/**
+ * @brief Processando a tecla pressionada, e atribuindo suas devida coordenada.
+*/
+void processKeypress(int keyPressed, int *line, int *column)
+{
+    switch (keyPressed)
+    {
+        case KEY_RIGHT:
+            (*column)++;
+            if ((*line) == 0 && (*column) == 3) (*column) = 2;
+            if ((*column) == 4) (*column) = 3;
+            break;
+
+        case KEY_LEFT:
+            (*column)--;
+            if ((*column) == -1) (*column) = 0;
+            break;
+
+        case KEY_UP:
+            if ((*column) == 2 && (*line) == 0) (*column) = 3;
+            if ((*column) == 1 && (*line) == 0) (*column) = 2;
+
+            (*line)++;
+
+            if ((*line) == 5) (*line) = 4;
+            break;
+
+        case KEY_DOWN:
+            if ((*column) == 1 && (*line) == 1) (*column) = 0;
+            if ((*column) == 2 && (*line) == 1) (*column) = 1;
+
+            (*line)--;
+
+            if ((*line) == -1) (*line) = 0;
+            break;
+        default:
+            break;
+    }
+}
+
 
 // Criação das caixas
 void createDisplay(int width, int height, int startY, int startX)
