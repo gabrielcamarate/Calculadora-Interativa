@@ -13,9 +13,9 @@
 
 // Quantidade de colunas da calculadora (y)
 #define CALCULATOR_COLUMN 5
-
 // Quantidade de linhas da calculadora  (x)
 #define CALCULATOR_LINE 4
+
 
 // Tamanho do botão (minimo)
 #define HEIGHT_BUTTON 1
@@ -26,13 +26,18 @@
 
 #define STR_CMP(x, y) (strcmp(x[i][j], y) == 0) // Macro de comparação
 #define MAX_CHARACTERS 100
+#define LENGTH_DISPLAY_X (WIDITH_DEFAULT - 4)
+
+#define LENGTH_DISPLAY_Y (HEIGHT_DEFAULT - 4)
+
+#define START_Y_DISPLAY 3
 
 //
 #define BUTTON_ROWS 5
 #define BUTTON_COLUMNS 4
 
 // Assets
-void removeSpaces(char *originalString, int length);
+void removeSpaces(char *originalString);
 void showErrors(const char *message);
 char *allocateMemory();
 void initialize();
@@ -47,7 +52,7 @@ void createBox(int width, int height, char *character, int startY, int startX);
 // Criação da interface
 void menuWindow();
 void drawCalculatorCase(int yMax, int xMax);
-void drawCalculatorButtons(int *widthButton, int *startY, int *startX, int *line, int *column);
+void drawCalculatorButtons(int *startY, int *startX, int *line, int *column);
 
 // Operações matematicas
 void sum();
@@ -57,3 +62,14 @@ void multiplication();
 
 // Processamento
 void processKeypress(int keyPressed, int *line, int *column);
+void processOperationEquals(char operator);
+
+void drawDisplayResults(int *startX_enter);
+void configPositionX(int *defaultLoop, int *defaultX, int *defaultPrint, int *result);
+void defineLoop(int *startX_enter, int *defaultLoop);
+
+
+// Funções de clear
+void drawClearDisplay();
+void clearVariable(char *display);
+void handleC(int *startX_enter, int *defaultLoop, int *countCharacters, int *result);

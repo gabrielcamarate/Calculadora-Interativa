@@ -4,15 +4,15 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include "calculadora.h"
 
-#include "calculadora.h"
-#include "calculadora.h"
 
 // Variaveis para manipulçação das operações
 char characterOperator[1];
-int countCharacters = 0;
 char *characters = NULL;
 char *charactersDisplay = NULL;
+int countCharacters = 0;
+int countCharactersDisplay = 0;
 int result = 0;
 
 // Definição dos botões da calculadora
@@ -32,22 +32,10 @@ WINDOW *calculatorCase;
 int main(int argc, char const *argv[])
 {
     setlocale(LC_ALL, "");
+    initialize();
+
     characters = allocateMemory();
     charactersDisplay = allocateMemory();
-
-    initialize();
-    int yMax, xMax;
-    getmaxyx(stdscr, yMax, xMax);
-
-    if (!has_colors())
-    {
-        printw("Seu terminal não suporta cores, sua experiência não será completa. [:-(");
-        mvprintw(1, 0, "Pressione qualquer tecla para continuar...");
-        getch();
-        clear();
-    }
-    start_color();
-    drawCalculatorCase(yMax, xMax);
 
     menuWindow();
     endwin();
@@ -61,6 +49,18 @@ void initialize()
     initscr();
     cbreak();
     curs_set(FALSE); // Não mostra o cursor
+    if (!has_colors())
+    {
+        printw("Seu terminal não suporta cores, sua experiência não será completa. [:-(");
+        mvprintw(1, 0, "Pressione qualquer tecla para continuar...");
+        getch();
+        clear();
+    }
+    start_color();
+
+    int yMax, xMax;
+    getmaxyx(stdscr, yMax, xMax);
+    drawCalculatorCase(yMax, xMax);
 }
 
 void showErrors(const char *message)
@@ -77,8 +77,10 @@ char *allocateMemory()
     return temp;
 }
 
-void removeSpaces(char *originalString, int length)
+void removeSpaces(char *originalString)
 {
+    int length = strlen(originalString);
+
     char *source = originalString;
     char *destination = originalString;
     while (*source && length > 0)
@@ -143,8 +145,9 @@ void drawCalculatorCase(int yMax, int xMax)
 }
 
 // Criação dos botões
-void drawCalculatorButtons(int *widthButton, int *startY, int *startX, int *line, int *column)
+void drawCalculatorButtons(int *startY, int *startX, int *line, int *column)
 {
+    int widthButton;
     for (int i = 0; i < BUTTON_ROWS; i++)
     {
         for (int j = 0; j < BUTTON_COLUMNS; j++)
@@ -152,14 +155,14 @@ void drawCalculatorButtons(int *widthButton, int *startY, int *startX, int *line
             if (!STR_CMP(buttons, ""))
             {
                 if ((*column) == 3 && (*line) == 0) (*column) = 2;
-                (*widthButton) = (STR_CMP(buttons, "0")) ? (WIDITH_DEFAULT - 3) / 2 : (WIDITH_DEFAULT - 3) / 4;
+                widthButton = (STR_CMP(buttons, "0")) ? (WIDITH_DEFAULT - 3) / 2 : (WIDITH_DEFAULT - 3) / 4;
 
                 if (i == (*line) && j == (*column)) wattron(calculatorCase, A_REVERSE);
 
-                createBox((*widthButton), HEIGHT_BUTTON, buttons[i][j], (*startY), (*startX));
+                createBox(widthButton, HEIGHT_BUTTON, buttons[i][j], (*startY), (*startX));
 
                 if (i == (*line) && j == (*column)) wattroff(calculatorCase, A_REVERSE);
-                (*startX) += (*widthButton) + 1;
+                (*startX) += widthButton + 1;
             }
         }
         (*startY) -= 3;
@@ -170,75 +173,43 @@ void drawCalculatorButtons(int *widthButton, int *startY, int *startX, int *line
 
 void menuWindow()
 {
-    int keyPressed;
-    int line = 0;
-    int column = 0;
-    int startX_enter = WIDITH_DEFAULT - 4;
-    int startY_enter = 3
-
-    int countCharactersDisplay = 0;
+    int keyPressed, line = 0, column = 0;
+    int startX_enter = LENGTH_DISPLAY_X;
     int defaultLoop = 0;
+
     char charactersTEMP[1];
 
     while (1)
     {
-        int startY = (HEIGHT_DEFAULT - 4), startX = 2;
-        int widthButton;
+        int startY = LENGTH_DISPLAY_Y, startX = 2;
 
-        drawCalculatorButtons(&widthButton, &startY, &startX, &line, &column);
+        drawCalculatorButtons(&startY, &startX, &line, &column);
 
-        int lengthDisplay = WIDITH_DEFAULT - 3;
-
+        int lengthDisplay = LENGTH_DISPLAY_X + 1;
         createDisplay(lengthDisplay, HEIGHT_BUTTON, startY, startX);
-        wrefresh(calculatorCase);
 
         keyPressed = wgetch(calculatorCase);
         processKeypress(keyPressed, &line, &column);
 
-        charactersTEMP[0] = buttons[line][column][0];
-        charactersTEMP[1] = '\0';
-
-        int lengthCharacters = strlen(charactersDisplay);
-        removeSpaces(charactersDisplay, lengthCharacters);
+        charactersTEMP[0] = buttons[line][column][0]; charactersTEMP[1] = '\0';
+        removeSpaces(charactersDisplay);
 
         /* 10 = ENTER */
         if (keyPressed == 10)
         {
-
-            if (charactersTEMP[0] != '=' && charactersTEMP[0] != 'C')
-                strcat(charactersDisplay, charactersTEMP); // Concatenando os caracteres
-
-            if (defaultLoop > 0)
-            {
-                startX_enter = 30;           /**/
-                startX_enter -= defaultLoop; /**/
-                defaultLoop++;
-            } // Configurando a posição de X
-
-            if (charactersTEMP[0] == 'C')
-            {
-                startX_enter = 30;
-                defaultLoop = 0;
-            }
+            if (charactersTEMP[0] != '=' && charactersTEMP[0] != 'C') strcat(charactersDisplay, charactersTEMP); // Concatenando os caracteres
+            if (defaultLoop > 0) defineLoop(&startX_enter, &defaultLoop);   // Modificando o loop
+            if (charactersTEMP[0] == 'C') handleC(&startX_enter, &defaultLoop, &countCharacters, &result); // Limpar tela caso seja C
 
             // Lógica para os digitos aparecerem na tela.
             if (isdigit(charactersTEMP[0]))
             {
                 characters[countCharacters] = *charactersTEMP;
-                mvwprintw(calculatorCase, startY_enter, startX_enter, "%s", charactersDisplay);
-                countCharacters++;
-                countCharactersDisplay++;
-                startX_enter--;
+                drawDisplayResults(&startX_enter);
             }
 
             // Lógica para os caracteres de operação aparecerem na tela.
-            else if (!isdigit(charactersTEMP[0]) && charactersTEMP[0] != '=' && charactersTEMP[0] != 'C')
-            {
-                mvwprintw(calculatorCase, startY_enter, startX_enter, "%s", charactersDisplay);
-                countCharacters++;
-                countCharactersDisplay++;
-                startX_enter--;
-            }
+            else if (!isdigit(charactersTEMP[0]) && charactersTEMP[0] != '=' && charactersTEMP[0] != 'C') drawDisplayResults(&startX_enter);
         }
 
         //
@@ -256,8 +227,6 @@ void menuWindow()
             {
                 int number = atoi(characters);
                 result = number;
-                mvwprintw(calculatorCase, 1, 1, "%i", number);
-
                 characterOperator[0] = '-';
                 for (int i = 0; i < strlen(characters); i++){characters[i] = ' ';}
                 countCharacters = 0;
@@ -267,7 +236,6 @@ void menuWindow()
             if (charactersTEMP[0] == 'x')
             {
                 int number = atoi(characters);
-                mvwprintw(calculatorCase, 5, 1, "%i", number);
                 if (number != 0) {result = number;}
 
                 characterOperator[0] = '*';
@@ -286,65 +254,104 @@ void menuWindow()
                 countCharacters = 0;
             }
 
-            if (charactersTEMP[0] == 'C')
-            {
-                int count = 2;
-                for (int i = 0; i < 30; i++)
-                {
-                    mvwprintw(calculatorCase, startY_enter, count, " ");
-                    count++;
-                }
-
-                for (int i = 0; i < strlen(charactersDisplay); i++) {charactersDisplay[i] = ' ';}
-                for (int i = 0; i < strlen(characters); i++) {characters[i] = ' ';}
-                countCharacters = 0;
-            }
-
             // Lógica quando o operador '=' é pressionado
             else if (charactersTEMP[0] == '=')
             {
-                int count = 2;
-
-                if (characterOperator[0] == '+') sum();
-                else if (characterOperator[0] == '-') subtraction();
-                else if (characterOperator[0] == '*') multiplication();
-                else if (characterOperator[0] == '/') division();
-
-                int arr[] = {9, 99, 999, 9999, 99999, 999999, 9999999, 99999999, 999999999}, numberOptions = sizeof(arr) / sizeof(arr[0]);
-
-                // Configuração da posição do print (não mexa)
                 defaultLoop = 1;
-                for (int i = 0; i < numberOptions; i++) if (result > arr[i]) defaultLoop++;
-
-                // Limpando o display e zerando a variavel.
-                for (int i = 0; i < 30; i++)
-                {
-                    mvwprintw(calculatorCase, startY_enter, count, " ");
-                    count++;
-                }
-
-                for (int i = 0; i < strlen(charactersDisplay); i++) {charactersDisplay[i] = ' ';}
-
-                // Determinando o tamanho do espaço do resultado (ex: strlen(resultado)), para poder pegar o valor correto
+                int defaultX = LENGTH_DISPLAY_X;
                 int defaultPrint = 1;
-                for (int i = 0; i < numberOptions; i++) if (result > arr[i]) defaultPrint++;
 
-                // Adicionando a variavel display, o resultado.
+                processOperationEquals(characterOperator[0]);
+                configPositionX(&defaultLoop, &defaultX, &defaultPrint, &result);
+
+
+                drawClearDisplay();
+                clearVariable(charactersDisplay);
+
                 sprintf(charactersDisplay + (strlen(charactersDisplay) - defaultPrint), "%d", result); countCharacters = 0;
 
-                // Determinando o tamanho do espaço do resultado (ex: strlen(resultado)), para poder pegar o valor correto
-                int defaultX = WIDITH_DEFAULT - 4;
-                for (int i = 0; i < numberOptions; i++) if (result > arr[i]) defaultX--;
 
-                mvwprintw(calculatorCase, startY_enter, defaultX, "%i", result);
+                mvwprintw(calculatorCase, START_Y_DISPLAY, defaultX, "%i", result);
             }
         }
     }
 }
 
-// Processamento
 
 /**
+ * @brief Configuração de exibição dos numeros e caracteres.
+*/
+void drawDisplayResults(int *startX_enter)
+{
+    mvwprintw(calculatorCase, START_Y_DISPLAY, (*startX_enter), "%s", charactersDisplay);
+    countCharacters++;
+    countCharactersDisplay++;
+    (*startX_enter)--;
+}
+
+/**
+ * @brief Configuração da posição de X de acordo com o número de loops do aplicativo.
+*/
+void defineLoop(int *startX_enter, int *defaultLoop)
+{
+    (*startX_enter) = 30;
+    (*startX_enter) -= (*defaultLoop);
+    (*defaultLoop)++;
+}
+
+/**
+ * @brief Configuração da posição de X, para mostrar na tela.
+*/
+void configPositionX(int *defaultLoop, int *defaultX, int *defaultPrint, int *result)
+{
+    int arr[] = {9, 99, 999, 9999, 99999, 999999, 9999999, 99999999, 999999999};
+    int numberOptions = sizeof(arr) / sizeof(arr[0]);
+    for (int i = 0; i < numberOptions; i++) if ((*result) > arr[i]) (*defaultPrint)++;
+    for (int i = 0; i < numberOptions; i++) if ((*result) > arr[i]) (*defaultX)--;
+    for (int i = 0; i < numberOptions; i++) if ((*result) > arr[i]) (*defaultLoop)++;
+}
+
+/**
+ * @brief Limpando a área do display.
+*/
+void drawClearDisplay()
+{
+    int count = 2;
+    for (int i = 0; i < LENGTH_DISPLAY_X; i++)
+    {
+        mvwprintw(calculatorCase, START_Y_DISPLAY, count, " ");
+        count++;
+    }
+}
+
+/**
+ * @brief Atribuindo espaço pra toda variavel.
+*/
+void clearVariable(char *display)
+{
+    for (int i = 0; i < strlen(display); i++)
+    {
+        display[i] = ' ';
+    }
+}
+
+/**
+ * @brief Modificações caso o character C seja pressionado.
+*/
+void handleC(int *startX_enter, int *defaultLoop, int *countCharacters, int *result)
+{
+    drawClearDisplay();
+    clearVariable(charactersDisplay);
+    clearVariable(characters);
+    *countCharacters = 0;
+    *startX_enter = 30;
+    *defaultLoop = 0;
+    *result = 0;
+}
+
+
+/**
+ * Processamento
  * @brief Processando a tecla pressionada, e atribuindo suas devida coordenada.
 */
 void processKeypress(int keyPressed, int *line, int *column)
@@ -384,6 +391,32 @@ void processKeypress(int keyPressed, int *line, int *column)
     }
 }
 
+/**
+ * @brief Processando a operação, e atribuindo ao resultado.
+*/
+void processOperationEquals(char operator)
+{
+    switch (characterOperator[0])
+    {
+        case '+':
+            sum();
+            break;
+
+        case '-':
+            subtraction();
+            break;
+
+        case '*':
+            multiplication();
+            break;
+
+        case '/':
+            division();
+            break;
+    }
+}
+
+
 
 // Criação das caixas
 void createDisplay(int width, int height, int startY, int startX)
@@ -392,6 +425,7 @@ void createDisplay(int width, int height, int startY, int startX)
     mvwprintw(calculatorCase, startY + 1, startX, "x");
     mvwprintw(calculatorCase, startY + 1, WIDITH_DEFAULT - 2, "x");
     lowerRow(width, height, startY, startX);
+    wrefresh(calculatorCase);
 }
 
 void createBox(int width, int height, char *character, int startY, int startX)
