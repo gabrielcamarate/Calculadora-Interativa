@@ -14,6 +14,8 @@ char *charactersDisplay = NULL;
 int countCharacters = 0;
 int countCharactersDisplay = 0;
 int result = 0;
+int defaultLoop = 0;
+int number = 0;
 
 // Definição dos botões da calculadora
 char *buttons[BUTTON_ROWS][BUTTON_COLUMNS] =
@@ -96,6 +98,21 @@ void removeSpaces(char *originalString)
     *destination = '\0';
 }
 
+void replace(char *characterDisplay)
+{
+    int lengthChar = strlen(charactersDisplay);
+    char *temp = malloc(lengthChar * sizeof(char));
+
+    for (int i = 0; i < lengthChar-1; i++)
+    {
+        temp[i] = charactersDisplay[i];
+    }
+    temp[lengthChar-1] = '\0';
+    mvwprintw(calculatorCase, 1, 1, "%s",temp);
+    strcpy(characterDisplay, temp);
+    mvwprintw(calculatorCase, 5, 1, "%s", characterDisplay);
+}
+
 // Operações matematicas
 void sum()
 {
@@ -175,107 +192,52 @@ void menuWindow()
 {
     int keyPressed, line = 0, column = 0;
     int startX_enter = LENGTH_DISPLAY_X;
-    int defaultLoop = 0;
 
     char charactersTEMP[1];
 
     while (1)
     {
         int startY = LENGTH_DISPLAY_Y, startX = 2;
+        int lengthDisplay = LENGTH_DISPLAY_X + 1;
 
         drawCalculatorButtons(&startY, &startX, &line, &column);
-
-        int lengthDisplay = LENGTH_DISPLAY_X + 1;
         createDisplay(lengthDisplay, HEIGHT_BUTTON, startY, startX);
 
         keyPressed = wgetch(calculatorCase);
         processKeypress(keyPressed, &line, &column);
-
-        charactersTEMP[0] = buttons[line][column][0]; charactersTEMP[1] = '\0';
+        charactersTEMP[0] = buttons[line][column][0];
+        charactersTEMP[1] = '\0';
         removeSpaces(charactersDisplay);
 
-        /* 10 = ENTER */
         if (keyPressed == 10)
         {
-            if (charactersTEMP[0] != '=' && charactersTEMP[0] != 'C') strcat(charactersDisplay, charactersTEMP); // Concatenando os caracteres
-            if (defaultLoop > 0) defineLoop(&startX_enter, &defaultLoop);   // Modificando o loop
-            if (charactersTEMP[0] == 'C') handleC(&startX_enter, &defaultLoop, &countCharacters, &result); // Limpar tela caso seja C
+            if (charactersTEMP[0] != '=' && charactersTEMP[0] != 'C' && charactersTEMP[0] != '<') strcat(charactersDisplay, charactersTEMP); // Concatenando os caracteres
+            if (defaultLoop > 0) defineLoop(&startX_enter);   // Modificando o loop
+            if (charactersTEMP[0] == 'C') handleC(&startX_enter, &countCharacters, &result); // Limpar tela caso seja C
 
-            // Lógica para os digitos aparecerem na tela.
+            if (charactersTEMP[0] == '<')
+            {
+                replace(charactersDisplay);
+                drawClearDisplay();
+                startX_enter += 2;
+            }
+
+
             if (isdigit(charactersTEMP[0]))
             {
                 characters[countCharacters] = *charactersTEMP;
                 drawDisplayResults(&startX_enter);
             }
-
-            // Lógica para os caracteres de operação aparecerem na tela.
-            else if (!isdigit(charactersTEMP[0]) && charactersTEMP[0] != '=' && charactersTEMP[0] != 'C') drawDisplayResults(&startX_enter);
-        }
-
-        //
-        if (keyPressed == 10 && !isdigit(charactersTEMP[0]))
-        {
-            // Lógica quando o operador '+' é pressionado
-            if (charactersTEMP[0] == '+')
+            else if (!isdigit(charactersTEMP[0]) && charactersTEMP[0] != '=' && charactersTEMP[0] != 'C')
             {
-                sum();
-                characterOperator[0] = '+';
-            }
-
-            // Lógica quando o operador '-' é pressionado
-            if (charactersTEMP[0] == '-')
-            {
-                int number = atoi(characters);
-                result = number;
-                characterOperator[0] = '-';
-                for (int i = 0; i < strlen(characters); i++){characters[i] = ' ';}
-                countCharacters = 0;
-            }
-
-            // Lógica quando o operador 'x' é pressionado
-            if (charactersTEMP[0] == 'x')
-            {
-                int number = atoi(characters);
-                if (number != 0) {result = number;}
-
-                characterOperator[0] = '*';
-                for (int i = 0; i < strlen(characters); i++) {characters[i] = ' ';}
-                countCharacters = 0;
-            }
-
-            // Lógica quando o operador '/' é pressionado
-            if (charactersTEMP[0] == '/')
-            {
-                int number = atoi(characters);
-                if (number != 0){result = number;}
-
-                characterOperator[0] = '/';
-                for (int i = 0; i < strlen(characters); i++) {characters[i] = ' ';}
-                countCharacters = 0;
-            }
-
-            // Lógica quando o operador '=' é pressionado
-            else if (charactersTEMP[0] == '=')
-            {
-                defaultLoop = 1;
-                int defaultX = LENGTH_DISPLAY_X;
-                int defaultPrint = 1;
-
-                processOperationEquals(characterOperator[0]);
-                configPositionX(&defaultLoop, &defaultX, &defaultPrint, &result);
-
-
-                drawClearDisplay();
-                clearVariable(charactersDisplay);
-
-                sprintf(charactersDisplay + (strlen(charactersDisplay) - defaultPrint), "%d", result); countCharacters = 0;
-
-
-                mvwprintw(calculatorCase, START_Y_DISPLAY, defaultX, "%i", result);
+                drawDisplayResults(&startX_enter);
             }
         }
+
+        if (keyPressed == 10 && !isdigit(charactersTEMP[0])) processOperations(charactersTEMP[0]);
     }
 }
+
 
 
 /**
@@ -292,23 +254,23 @@ void drawDisplayResults(int *startX_enter)
 /**
  * @brief Configuração da posição de X de acordo com o número de loops do aplicativo.
 */
-void defineLoop(int *startX_enter, int *defaultLoop)
+void defineLoop(int *startX_enter)
 {
     (*startX_enter) = 30;
-    (*startX_enter) -= (*defaultLoop);
-    (*defaultLoop)++;
+    (*startX_enter) -= defaultLoop;
+    defaultLoop++;
 }
 
 /**
  * @brief Configuração da posição de X, para mostrar na tela.
 */
-void configPositionX(int *defaultLoop, int *defaultX, int *defaultPrint, int *result)
+void configPositionX(int *defaultX, int *defaultPrint, int *result)
 {
     int arr[] = {9, 99, 999, 9999, 99999, 999999, 9999999, 99999999, 999999999};
     int numberOptions = sizeof(arr) / sizeof(arr[0]);
     for (int i = 0; i < numberOptions; i++) if ((*result) > arr[i]) (*defaultPrint)++;
     for (int i = 0; i < numberOptions; i++) if ((*result) > arr[i]) (*defaultX)--;
-    for (int i = 0; i < numberOptions; i++) if ((*result) > arr[i]) (*defaultLoop)++;
+    for (int i = 0; i < numberOptions; i++) if ((*result) > arr[i]) defaultLoop++;
 }
 
 /**
@@ -338,14 +300,14 @@ void clearVariable(char *display)
 /**
  * @brief Modificações caso o character C seja pressionado.
 */
-void handleC(int *startX_enter, int *defaultLoop, int *countCharacters, int *result)
+void handleC(int *startX_enter, int *countCharacters, int *result)
 {
     drawClearDisplay();
     clearVariable(charactersDisplay);
     clearVariable(characters);
     *countCharacters = 0;
     *startX_enter = 30;
-    *defaultLoop = 0;
+    defaultLoop = 0;
     *result = 0;
 }
 
@@ -392,7 +354,7 @@ void processKeypress(int keyPressed, int *line, int *column)
 }
 
 /**
- * @brief Processando a operação, e atribuindo ao resultado.
+ * @brief Processando a operação após seleção do [=], e atribuindo ao resultado.
 */
 void processOperationEquals(char operator)
 {
@@ -416,7 +378,58 @@ void processOperationEquals(char operator)
     }
 }
 
+/**
+ * @brief Processando a operação selecionada.
+*/
+void processOperations(char charactersTEMP)
+{
+    switch (charactersTEMP)
+    {
+        case '+':
+            sum();
+            characterOperator[0] = '+';
+            break;
 
+        case '-':
+            number = atoi(characters);
+            result = number;
+            characterOperator[0] = '-';
+            clearVariable(characters);
+            countCharacters = 0;
+            break;
+
+        case '*':
+            number = atoi(characters);
+            if (number != 0) result = number;
+
+            characterOperator[0] = '*';
+            clearVariable(characters);
+            countCharacters = 0;
+            break;
+
+        case '/':
+            number = atoi(characters);
+            if (number != 0) result = number;
+
+            characterOperator[0] = '/';
+            clearVariable(characters);
+            countCharacters = 0;
+            break;
+
+        case '=':
+            defaultLoop = 1;
+            int defaultX = LENGTH_DISPLAY_X;
+            int defaultPrint = 1;
+            processOperationEquals(characterOperator[0]);
+            configPositionX(&defaultX, &defaultPrint, &result);
+            drawClearDisplay();
+            clearVariable(characters);
+            clearVariable(charactersDisplay);
+            sprintf(charactersDisplay + (strlen(charactersDisplay) - defaultPrint), "%d", result); countCharacters = 0;
+            mvwprintw(calculatorCase, START_Y_DISPLAY, defaultX, "%i", result);
+            break;
+    }
+}
 
 // Criação das caixas
 void createDisplay(int width, int height, int startY, int startX)

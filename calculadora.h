@@ -37,6 +37,7 @@
 #define BUTTON_COLUMNS 4
 
 // Assets
+void replace(char *characterDisplay);
 void removeSpaces(char *originalString);
 void showErrors(const char *message);
 char *allocateMemory();
@@ -63,13 +64,14 @@ void multiplication();
 // Processamento
 void processKeypress(int keyPressed, int *line, int *column);
 void processOperationEquals(char operator);
+void processOperations(char charactersTEMP);
 
+// Display
 void drawDisplayResults(int *startX_enter);
-void configPositionX(int *defaultLoop, int *defaultX, int *defaultPrint, int *result);
-void defineLoop(int *startX_enter, int *defaultLoop);
-
+void configPositionX(int *defaultX, int *defaultPrint, int *result);
+void defineLoop(int *startX_enter);
 
 // Funções de clear
 void drawClearDisplay();
 void clearVariable(char *display);
-void handleC(int *startX_enter, int *defaultLoop, int *countCharacters, int *result);
+void handleC(int *startX_enter, int *countCharacters, int *result);
