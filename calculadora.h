@@ -36,12 +36,20 @@
 #define BUTTON_ROWS 5
 #define BUTTON_COLUMNS 4
 
+
+#define IS_CLEAR_CHARACTER(ch) (ch == '=' || ch == 'C' || ch == '<')
+#define IS_OPERATOR(op) (op == '+' || op == '-' || op == 'x' || op == '/')
+
+
 // Assets
 void replace(char *characterDisplay);
 void removeSpaces(char *originalString);
 void showErrors(const char *message);
+void indexPosition(int *startX_enter);
+void showTerminalColorError();
 char *allocateMemory();
 void initialize();
+
 
 // Criação das caixas
 void topRow(int width, int height, int startY, int startX);
@@ -60,11 +68,13 @@ void sum();
 void subtraction();
 void division();
 void multiplication();
+void equal();
 
 // Processamento
 void processKeypress(int keyPressed, int *line, int *column);
 void processOperationEquals(char operator);
-void processOperations(char charactersTEMP);
+void processOperations(char charactersTEMP, int *startX_enter);
+void processKeyClear(char character, int *startX_enter);
 
 // Display
 void drawDisplayResults(int *startX_enter);
@@ -74,4 +84,4 @@ void defineLoop(int *startX_enter);
 // Funções de clear
 void drawClearDisplay();
 void clearVariable(char *display);
-void handleC(int *startX_enter, int *countCharacters, int *result);
+void handleC(int *startX_enter, int *countNumberBeingTyped, int *result);

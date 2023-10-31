@@ -1,42 +1,43 @@
+#include "calculadora.h"
 #include <ctype.h>
 #include <locale.h>
 #include <ncurses.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "calculadora.h"
 
 
-// Variaveis para manipulçação das operações
-char characterOperator[1];
-char *characters = NULL;
+// Variaveis para manipulaçação das operações
+char currentSelectedCharacterOperator;
+char *currentNumberBeingTyped = NULL;
 char *charactersDisplay = NULL;
-int countCharacters = 0;
+int countNumberBeingTyped = 0;
 int countCharactersDisplay = 0;
+
 int result = 0;
 int defaultLoop = 0;
+
 int number = 0;
+int countOperations = 0;
 
 // Definição dos botões da calculadora
-char *buttons[BUTTON_ROWS][BUTTON_COLUMNS] =
-    {
-        {"0", ",", "=", ""},
-        {"1", "2", "3", "+"},
-        {"4", "5", "6", "-"},
-        {"7", "8", "9", "x"},
-        {"C", "<", "%", "/"}
-    };
+char *buttons[BUTTON_ROWS][BUTTON_COLUMNS] = {
+    {"0", ",", "=", ""}, //
+    {"1", "2", "3", "+"}, //
+    {"4", "5", "6", "-"}, //
+    {"7", "8", "9", "x"}, //
+    {"C", "<", "%", "/"} //
+};
 
 // Variaveis principais
 WINDOW *calculatorCase;
-
 
 int main(int argc, char const *argv[])
 {
     setlocale(LC_ALL, "");
     initialize();
 
-    characters = allocateMemory();
+    currentNumberBeingTyped = allocateMemory();
     charactersDisplay = allocateMemory();
 
     menuWindow();
@@ -45,23 +46,28 @@ int main(int argc, char const *argv[])
     return 0;
 }
 
+void showTerminalColorError()
+{
+    printw("Seu terminal não suporta cores, sua experiência não será completa. [:-(");
+    mvprintw(1, 0, "Pressione qualquer tecla para continuar...");
+    getch();
+    clear();
+}
+
 // ASSETS
 void initialize()
 {
     initscr();
     cbreak();
     curs_set(FALSE); // Não mostra o cursor
-    if (!has_colors())
-    {
-        printw("Seu terminal não suporta cores, sua experiência não será completa. [:-(");
-        mvprintw(1, 0, "Pressione qualquer tecla para continuar...");
-        getch();
-        clear();
-    }
+    if (!has_colors()) showTerminalColorError();
     start_color();
 
+    // Tamanho do console, quando aberto pelo usuario
     int yMax, xMax;
     getmaxyx(stdscr, yMax, xMax);
+
+    // Criando a borda da calculadora
     drawCalculatorCase(yMax, xMax);
 }
 
@@ -75,7 +81,8 @@ void showErrors(const char *message)
 char *allocateMemory()
 {
     char *temp = (char *) malloc(MAX_CHARACTERS * sizeof(char));
-    if (temp == NULL) showErrors("Memory allocation failure.");
+    if (temp == NULL)
+        showErrors("Memory allocation failure.");
     return temp;
 }
 
@@ -103,12 +110,12 @@ void replace(char *characterDisplay)
     int lengthChar = strlen(charactersDisplay);
     char *temp = malloc(lengthChar * sizeof(char));
 
-    for (int i = 0; i < lengthChar-1; i++)
+    for (int i = 0; i < lengthChar - 1; i++)
     {
         temp[i] = charactersDisplay[i];
     }
-    temp[lengthChar-1] = '\0';
-    mvwprintw(calculatorCase, 1, 1, "%s",temp);
+    temp[lengthChar - 1] = '\0';
+    mvwprintw(calculatorCase, 1, 1, "%s", temp);
     strcpy(characterDisplay, temp);
     mvwprintw(calculatorCase, 5, 1, "%s", characterDisplay);
 }
@@ -116,35 +123,36 @@ void replace(char *characterDisplay)
 // Operações matematicas
 void sum()
 {
-    int number = atoi(characters);
+    int number = atoi(currentNumberBeingTyped);
     result += number;
 
-    for (int i = 0; i < strlen(characters); i++){characters[i] = ' ';}
-    countCharacters = 0;
+    clearVariable(currentNumberBeingTyped);
+
+    countNumberBeingTyped = 0;
 }
 
 void subtraction()
 {
-    int number = atoi(characters);
+    int number = atoi(currentNumberBeingTyped);
     result = result - number;
-    for (int i = 0; i < strlen(characters); i++){characters[i] = ' ';}
-    countCharacters = 0;
+    clearVariable(currentNumberBeingTyped);
+    countNumberBeingTyped = 0;
 }
 
 void multiplication()
 {
-    int number = atoi(characters);
+    int number = atoi(currentNumberBeingTyped);
     result = number * result;
-    for (int i = 0; i < strlen(characters); i++){characters[i] = ' ';}
-    countCharacters = 0;
+    clearVariable(currentNumberBeingTyped);
+    countNumberBeingTyped = 0;
 }
 
 void division()
 {
-    int number = atoi(characters);
+    int number = atoi(currentNumberBeingTyped);
     result = result / number;
-    for (int i = 0; i < strlen(characters); i++){characters[i] = ' ';}
-    countCharacters = 0;
+    clearVariable(currentNumberBeingTyped);
+    countNumberBeingTyped = 0;
 }
 
 // Criação da interface
@@ -171,14 +179,17 @@ void drawCalculatorButtons(int *startY, int *startX, int *line, int *column)
         {
             if (!STR_CMP(buttons, ""))
             {
-                if ((*column) == 3 && (*line) == 0) (*column) = 2;
+                if ((*column) == 3 && (*line) == 0)
+                    (*column) = 2;
                 widthButton = (STR_CMP(buttons, "0")) ? (WIDITH_DEFAULT - 3) / 2 : (WIDITH_DEFAULT - 3) / 4;
 
-                if (i == (*line) && j == (*column)) wattron(calculatorCase, A_REVERSE);
+                if (i == (*line) && j == (*column))
+                    wattron(calculatorCase, A_REVERSE);
 
                 createBox(widthButton, HEIGHT_BUTTON, buttons[i][j], (*startY), (*startX));
 
-                if (i == (*line) && j == (*column)) wattroff(calculatorCase, A_REVERSE);
+                if (i == (*line) && j == (*column))
+                    wattroff(calculatorCase, A_REVERSE);
                 (*startX) += widthButton + 1;
             }
         }
@@ -197,63 +208,81 @@ void menuWindow()
 
     while (1)
     {
+        // Visual da calculadora
         int startY = LENGTH_DISPLAY_Y, startX = 2;
         int lengthDisplay = LENGTH_DISPLAY_X + 1;
-
         drawCalculatorButtons(&startY, &startX, &line, &column);
         createDisplay(lengthDisplay, HEIGHT_BUTTON, startY, startX);
 
         keyPressed = wgetch(calculatorCase);
         processKeypress(keyPressed, &line, &column);
+
+        // Guarda o character selecionado (não confirmado)
         charactersTEMP[0] = buttons[line][column][0];
         charactersTEMP[1] = '\0';
+
         removeSpaces(charactersDisplay);
 
-        if (keyPressed == 10)
+        // Debug
+        int count = 2;
+        for (int i = 0; i < LENGTH_DISPLAY_X; i++)
         {
-            if (charactersTEMP[0] != '=' && charactersTEMP[0] != 'C' && charactersTEMP[0] != '<') strcat(charactersDisplay, charactersTEMP); // Concatenando os caracteres
-            if (defaultLoop > 0) defineLoop(&startX_enter);   // Modificando o loop
-            if (charactersTEMP[0] == 'C') handleC(&startX_enter, &countCharacters, &result); // Limpar tela caso seja C
+            mvwprintw(calculatorCase, 1, count, " ");
+            count++;
+        }
+        mvwprintw(calculatorCase, 1, 1, "Ch: %s", currentNumberBeingTyped);
+        mvwprintw(calculatorCase, 5, 1, "result: %i", result);
+        mvwprintw(calculatorCase, 5, 18, "x: %i", startX_enter);
+        mvwprintw(calculatorCase, 1, 18, "display: %s", charactersDisplay);
 
-            if (charactersTEMP[0] == '<')
-            {
-                replace(charactersDisplay);
-                drawClearDisplay();
-                startX_enter += 2;
-            }
+        if (keyPressed != 10) continue;
 
-
-            if (isdigit(charactersTEMP[0]))
-            {
-                characters[countCharacters] = *charactersTEMP;
-                drawDisplayResults(&startX_enter);
-            }
-            else if (!isdigit(charactersTEMP[0]) && charactersTEMP[0] != '=' && charactersTEMP[0] != 'C')
-            {
-                drawDisplayResults(&startX_enter);
-            }
+        // Ignore '=' 'C' '<' na hora de concatenar para mostrar na tela
+        if ( IS_CLEAR_CHARACTER(charactersTEMP[0]) == false )
+        {
+            strcat(charactersDisplay, charactersTEMP);
         }
 
-        if (keyPressed == 10 && !isdigit(charactersTEMP[0])) processOperations(charactersTEMP[0]);
+        // ? Misterios da meia noite ?
+        if (defaultLoop > 0)
+        {
+            defineLoop(&startX_enter);
+        }
+
+        processKeyClear(charactersTEMP[0], &startX_enter);
+
+        // Atualizar numero sendo digitado
+        if (isdigit(charactersTEMP[0]))
+        {
+            currentNumberBeingTyped[countNumberBeingTyped] = *charactersTEMP;
+            drawDisplayResults(&startX_enter);
+            indexPosition(&startX_enter);
+        }
+        else
+        {
+            if ( IS_CLEAR_CHARACTER(charactersTEMP[0]) == false )
+            {
+                drawDisplayResults(&startX_enter);
+                indexPosition(&startX_enter);
+            }
+            processOperations(charactersTEMP[0], &startX_enter);
+        }
     }
 }
 
 
-
-/**
- * @brief Configuração de exibição dos numeros e caracteres.
-*/
 void drawDisplayResults(int *startX_enter)
 {
     mvwprintw(calculatorCase, START_Y_DISPLAY, (*startX_enter), "%s", charactersDisplay);
-    countCharacters++;
+}
+
+void indexPosition(int *startX_enter)
+{
+    countNumberBeingTyped++;
     countCharactersDisplay++;
     (*startX_enter)--;
 }
 
-/**
- * @brief Configuração da posição de X de acordo com o número de loops do aplicativo.
-*/
 void defineLoop(int *startX_enter)
 {
     (*startX_enter) = 30;
@@ -261,21 +290,29 @@ void defineLoop(int *startX_enter)
     defaultLoop++;
 }
 
-/**
- * @brief Configuração da posição de X, para mostrar na tela.
-*/
 void configPositionX(int *defaultX, int *defaultPrint, int *result)
 {
-    int arr[] = {9, 99, 999, 9999, 99999, 999999, 9999999, 99999999, 999999999};
-    int numberOptions = sizeof(arr) / sizeof(arr[0]);
-    for (int i = 0; i < numberOptions; i++) if ((*result) > arr[i]) (*defaultPrint)++;
-    for (int i = 0; i < numberOptions; i++) if ((*result) > arr[i]) (*defaultX)--;
-    for (int i = 0; i < numberOptions; i++) if ((*result) > arr[i]) defaultLoop++;
+    int arrayPositive[] = {9, 99, 999, 9999, 99999, 999999, 9999999, 99999999, 999999999};
+    int arrayNegative[] = {0, -9, -99, -999, -9999, -99999, -999999, -9999999, -99999999, -999999999};
+    int numberOptionsPositive = sizeof(arrayPositive) / sizeof(arrayPositive[0]);
+    int numberOptionsNegative = sizeof(arrayNegative) / sizeof(arrayNegative[0]);
+
+    for (int i = 0; i < numberOptionsPositive; i++)
+        if ((*result) > arrayPositive[i])
+            (*defaultPrint)++;
+    for (int i = 0; i < numberOptionsPositive; i++)
+        if ((*result) > arrayPositive[i])
+            (*defaultX)--;
+
+    for (int i = 0; i < numberOptionsNegative; i++)
+        if ((*result) < arrayNegative[i])
+            (*defaultX)--;
+
+    for (int i = 0; i < numberOptionsPositive; i++)
+        if ((*result) > arrayPositive[i])
+            defaultLoop++;
 }
 
-/**
- * @brief Limpando a área do display.
-*/
 void drawClearDisplay()
 {
     int count = 2;
@@ -286,9 +323,6 @@ void drawClearDisplay()
     }
 }
 
-/**
- * @brief Atribuindo espaço pra toda variavel.
-*/
 void clearVariable(char *display)
 {
     for (int i = 0; i < strlen(display); i++)
@@ -297,68 +331,90 @@ void clearVariable(char *display)
     }
 }
 
-/**
- * @brief Modificações caso o character C seja pressionado.
-*/
-void handleC(int *startX_enter, int *countCharacters, int *result)
+void handleC(int *startX_enter, int *countNumberBeingTyped, int *result)
 {
     drawClearDisplay();
     clearVariable(charactersDisplay);
-    clearVariable(characters);
-    *countCharacters = 0;
+    clearVariable(currentNumberBeingTyped);
+    *countNumberBeingTyped = 0;
     *startX_enter = 30;
     defaultLoop = 0;
     *result = 0;
 }
 
-
-/**
- * Processamento
- * @brief Processando a tecla pressionada, e atribuindo suas devida coordenada.
-*/
 void processKeypress(int keyPressed, int *line, int *column)
 {
     switch (keyPressed)
     {
         case KEY_RIGHT:
             (*column)++;
-            if ((*line) == 0 && (*column) == 3) (*column) = 2;
-            if ((*column) == 4) (*column) = 3;
+            if ((*line) == 0 && (*column) == 3)
+                (*column) = 2;
+            if ((*column) == 4)
+                (*column) = 3;
             break;
 
         case KEY_LEFT:
             (*column)--;
-            if ((*column) == -1) (*column) = 0;
+            if ((*column) == -1)
+                (*column) = 0;
             break;
 
         case KEY_UP:
-            if ((*column) == 2 && (*line) == 0) (*column) = 3;
-            if ((*column) == 1 && (*line) == 0) (*column) = 2;
+            if ((*column) == 2 && (*line) == 0)
+                (*column) = 3;
+            if ((*column) == 1 && (*line) == 0)
+                (*column) = 2;
 
             (*line)++;
 
-            if ((*line) == 5) (*line) = 4;
+            if ((*line) == 5)
+                (*line) = 4;
             break;
 
         case KEY_DOWN:
-            if ((*column) == 1 && (*line) == 1) (*column) = 0;
-            if ((*column) == 2 && (*line) == 1) (*column) = 1;
+            if ((*column) == 1 && (*line) == 1)
+                (*column) = 0;
+            if ((*column) == 2 && (*line) == 1)
+                (*column) = 1;
 
             (*line)--;
 
-            if ((*line) == -1) (*line) = 0;
+            if ((*line) == -1)
+                (*line) = 0;
             break;
         default:
             break;
     }
 }
 
-/**
- * @brief Processando a operação após seleção do [=], e atribuindo ao resultado.
-*/
+void processKeyClear(char character, int *startX_enter)
+{
+    switch (character)
+    {
+        case 'C':
+            handleC(startX_enter, &countNumberBeingTyped, &result); // Limpar tela caso seja C
+            break;
+
+        case '<':
+            if (strlen(charactersDisplay) != 0)
+            {
+                replace(charactersDisplay);
+                drawClearDisplay();
+                (*startX_enter) += 2;
+                mvwprintw(calculatorCase, START_Y_DISPLAY, (*startX_enter), "%s", charactersDisplay);
+                (*startX_enter)--;
+            }
+            break;
+
+        default:
+            break;
+    }
+}
+
 void processOperationEquals(char operator)
 {
-    switch (characterOperator[0])
+    switch (currentSelectedCharacterOperator)
     {
         case '+':
             sum();
@@ -376,57 +432,81 @@ void processOperationEquals(char operator)
             division();
             break;
     }
+    currentSelectedCharacterOperator = "";
 }
 
-/**
- * @brief Processando a operação selecionada.
-*/
-void processOperations(char charactersTEMP)
+void equal()
 {
-    switch (charactersTEMP)
+    defaultLoop = 1;
+    int defaultX = LENGTH_DISPLAY_X;
+    int defaultPrint = 1;
+    processOperationEquals(currentSelectedCharacterOperator);
+    configPositionX(&defaultX, &defaultPrint, &result);
+    drawClearDisplay();
+    clearVariable(currentNumberBeingTyped);
+    clearVariable(charactersDisplay);
+    sprintf(charactersDisplay + (strlen(charactersDisplay) - defaultPrint), "%d", result);
+
+    sprintf(currentNumberBeingTyped + 0, "%d", result);
+
+    countNumberBeingTyped = 1;
+    mvwprintw(calculatorCase, START_Y_DISPLAY, defaultX, "%i", result);
+}
+
+void processOperations(char currentCharacter, int *startX_enter)
+{
+    int temp = strlen(charactersDisplay);
+    for (int i = 0; i < temp; i++)
+    {
+        if (IS_OPERATOR(charactersDisplay[i]))
+        {
+            countOperations++;
+        }
+    }
+
+    if (IS_OPERATOR(currentCharacter) || currentCharacter == '=')
+    {
+        if(countOperations == 2 || currentCharacter == '=')
+        {
+            equal();
+            countOperations = 0;
+            return;
+        }
+    }
+
+    switch (currentCharacter)
     {
         case '+':
             sum();
-            characterOperator[0] = '+';
+            countOperations = 0;
+            currentSelectedCharacterOperator = '+';
             break;
 
         case '-':
-            number = atoi(characters);
+            countOperations = 0;
+            number = atoi(currentNumberBeingTyped);
             result = number;
-            characterOperator[0] = '-';
-            clearVariable(characters);
-            countCharacters = 0;
+            currentSelectedCharacterOperator = '-';
+            clearVariable(currentNumberBeingTyped);
+            countNumberBeingTyped = 0;
             break;
 
-        case '*':
-            number = atoi(characters);
+        case 'x':
+            countOperations = 0;
+            number = atoi(currentNumberBeingTyped);
             if (number != 0) result = number;
-
-            characterOperator[0] = '*';
-            clearVariable(characters);
-            countCharacters = 0;
+            currentSelectedCharacterOperator = '*';
+            clearVariable(currentNumberBeingTyped);
+            countNumberBeingTyped = 0;
             break;
 
         case '/':
-            number = atoi(characters);
-            if (number != 0) result = number;
-
-            characterOperator[0] = '/';
-            clearVariable(characters);
-            countCharacters = 0;
-            break;
-
-        case '=':
-            defaultLoop = 1;
-            int defaultX = LENGTH_DISPLAY_X;
-            int defaultPrint = 1;
-            processOperationEquals(characterOperator[0]);
-            configPositionX(&defaultX, &defaultPrint, &result);
-            drawClearDisplay();
-            clearVariable(characters);
-            clearVariable(charactersDisplay);
-            sprintf(charactersDisplay + (strlen(charactersDisplay) - defaultPrint), "%d", result); countCharacters = 0;
-            mvwprintw(calculatorCase, START_Y_DISPLAY, defaultX, "%i", result);
+            countOperations = 0;
+            number = atoi(currentNumberBeingTyped);
+            if (number != 0)  result = number;
+            currentSelectedCharacterOperator = '/';
+            clearVariable(currentNumberBeingTyped);
+            countNumberBeingTyped = 0;
             break;
     }
 }
