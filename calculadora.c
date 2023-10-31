@@ -5,10 +5,12 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-
+#include <limits.h>
+#include <stdbool.h>
 
 // Variaveis para manipulaçação das operações
 char currentSelectedCharacterOperator;
+char tempCurrentSelectedCharacterOperator;
 char *currentNumberBeingTyped = NULL;
 char *charactersDisplay = NULL;
 int countNumberBeingTyped = 0;
@@ -19,6 +21,7 @@ int defaultLoop = 0;
 
 int number = 0;
 int countOperations = 0;
+int countEquals = 0;
 
 // Definição dos botões da calculadora
 char *buttons[BUTTON_ROWS][BUTTON_COLUMNS] = {
@@ -203,8 +206,8 @@ void menuWindow()
 {
     int keyPressed, line = 0, column = 0;
     int startX_enter = LENGTH_DISPLAY_X;
-
     char charactersTEMP[1];
+    bool verification = true;
 
     while (1)
     {
@@ -230,17 +233,24 @@ void menuWindow()
             mvwprintw(calculatorCase, 1, count, " ");
             count++;
         }
-        mvwprintw(calculatorCase, 1, 1, "Ch: %s", currentNumberBeingTyped);
-        mvwprintw(calculatorCase, 5, 1, "result: %i", result);
-        mvwprintw(calculatorCase, 5, 18, "x: %i", startX_enter);
-        mvwprintw(calculatorCase, 1, 18, "display: %s", charactersDisplay);
+        //--------//
 
         if (keyPressed != 10) continue;
 
+        if (verification == false && charactersTEMP[0] == 'C') verification = true;
+        if (verification == false) continue;
+
         // Ignore '=' 'C' '<' na hora de concatenar para mostrar na tela
-        if ( IS_CLEAR_CHARACTER(charactersTEMP[0]) == false )
+        if (IS_CLEAR_CHARACTER(charactersTEMP[0]) == false)
         {
             strcat(charactersDisplay, charactersTEMP);
+        }
+
+        // Limpe a tela e a variavel, caso o primeiro caracter seja um operador
+        if (ALL_CHARACTERS_NOT_NUMBERS(charactersDisplay[0]))
+        {
+            clearVariable(charactersDisplay);
+            continue;
         }
 
         // ? Misterios da meia noite ?
@@ -252,24 +262,49 @@ void menuWindow()
         processKeyClear(charactersTEMP[0], &startX_enter);
 
         // Atualizar numero sendo digitado
-        if (isdigit(charactersTEMP[0]))
+        if (strlen(currentNumberBeingTyped) < 9)
         {
-            currentNumberBeingTyped[countNumberBeingTyped] = *charactersTEMP;
-            drawDisplayResults(&startX_enter);
-            indexPosition(&startX_enter);
-        }
-        else
-        {
-            if ( IS_CLEAR_CHARACTER(charactersTEMP[0]) == false )
+            if (isdigit(charactersTEMP[0]))
             {
+                currentNumberBeingTyped[countNumberBeingTyped] = *charactersTEMP;
                 drawDisplayResults(&startX_enter);
                 indexPosition(&startX_enter);
             }
-            processOperations(charactersTEMP[0], &startX_enter);
+            else
+            {
+                if ( IS_CLEAR_CHARACTER(charactersTEMP[0]) == false )
+                {
+                    drawDisplayResults(&startX_enter);
+                    indexPosition(&startX_enter);
+                }
+                processOperations(charactersTEMP[0], &startX_enter);
+            }
+        }
+
+        else
+        {
+            verification = errorMessageOfLength(&startX_enter);
         }
     }
 }
 
+
+bool errorMessageOfLength(int *startX_enter)
+{
+    drawClearDisplay();
+    clearVariable(charactersDisplay);
+    clearVariable(currentNumberBeingTyped);
+    for (int i = 0; i < 7; i++)
+    {
+        currentNumberBeingTyped[i] = '0';
+    }
+    currentNumberBeingTyped[8] = '\0';
+    countNumberBeingTyped = 0;
+    countCharactersDisplay = 0;
+    (*startX_enter) = 30;
+    mvwprintw(calculatorCase, 3, 5, "LIMITE EXCEDIDO, APERTE C ");
+    return false;
+}
 
 void drawDisplayResults(int *startX_enter)
 {
@@ -432,7 +467,7 @@ void processOperationEquals(char operator)
             division();
             break;
     }
-    currentSelectedCharacterOperator = "";
+    currentSelectedCharacterOperator = '\0';
 }
 
 void equal()
@@ -453,6 +488,24 @@ void equal()
     mvwprintw(calculatorCase, START_Y_DISPLAY, defaultX, "%i", result);
 }
 
+void equalRepeat(char tempCurrentSelectedCharacterOperator)
+{
+    defaultLoop = 2;
+    int defaultX = LENGTH_DISPLAY_X;
+    int defaultPrint = 1;
+    processOperationEquals(currentSelectedCharacterOperator);
+    configPositionX(&defaultX, &defaultPrint, &result);
+    drawClearDisplay();
+    clearVariable(currentNumberBeingTyped);
+    clearVariable(charactersDisplay);
+    sprintf(charactersDisplay + (strlen(charactersDisplay) - defaultPrint), "%d", result);
+    countNumberBeingTyped = 1;
+
+    sprintf(charactersDisplay + strlen(charactersDisplay), "%c", tempCurrentSelectedCharacterOperator);
+    mvwprintw(calculatorCase, START_Y_DISPLAY, defaultX-4, "%s", charactersDisplay);
+}
+
+
 void processOperations(char currentCharacter, int *startX_enter)
 {
     int temp = strlen(charactersDisplay);
@@ -462,24 +515,86 @@ void processOperations(char currentCharacter, int *startX_enter)
         {
             countOperations++;
         }
+        if (charactersDisplay[i] == '=')
+        {
+            countEquals++;
+        }
     }
 
     if (IS_OPERATOR(currentCharacter) || currentCharacter == '=')
     {
         if(countOperations == 2 || currentCharacter == '=')
         {
-            equal();
-            countOperations = 0;
+            char tempCurrentSelectedCharacterOperator;
+            if (currentCharacter != '=')
+            {
+                countEquals = 0;
+                switch (currentCharacter)
+                {
+                    case '+':
+                        tempCurrentSelectedCharacterOperator = '+';
+                        currentSelectedCharacterOperator = '+';
+                        break;
+
+                    case '-':
+                        tempCurrentSelectedCharacterOperator = '-';
+                        currentSelectedCharacterOperator = '-';
+                        break;
+
+                    case 'x':
+                        tempCurrentSelectedCharacterOperator = 'x';
+                        currentSelectedCharacterOperator = '*';
+                        break;
+
+                    case '/':
+                        tempCurrentSelectedCharacterOperator = '/';
+                        currentSelectedCharacterOperator = '/';
+                        break;
+                }
+                equalRepeat(tempCurrentSelectedCharacterOperator);
+                countOperations = 0;
+            }
+            else
+            {
+                if (countEquals == 0)
+                {
+                    switch (currentCharacter)
+                    {
+                        case '+':
+                            currentSelectedCharacterOperator = '+';
+                            break;
+
+                        case '-':
+                            currentSelectedCharacterOperator = '-';
+                            break;
+
+                        case 'x':
+                            currentSelectedCharacterOperator = '*';
+                            break;
+
+                        case '/':
+                            currentSelectedCharacterOperator = '/';
+                            break;
+                    }
+                }
+                equal();
+                countEquals = 1;
+                countOperations = 0;
+            }
             return;
         }
     }
 
+
     switch (currentCharacter)
     {
         case '+':
-            sum();
             countOperations = 0;
+            number = atoi(currentNumberBeingTyped);
+            result = number;
             currentSelectedCharacterOperator = '+';
+            clearVariable(currentNumberBeingTyped);
+            countNumberBeingTyped = 0;
             break;
 
         case '-':

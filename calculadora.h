@@ -1,4 +1,5 @@
 #pragma once
+#include <stdbool.h>
 
 // Caracteres que formam uma caixa (linha 10 até a linha 17)
 // Quinas
@@ -38,7 +39,8 @@
 
 
 #define IS_CLEAR_CHARACTER(ch) (ch == '=' || ch == 'C' || ch == '<')
-#define IS_OPERATOR(op) (op == '+' || op == '-' || op == 'x' || op == '/')
+#define IS_OPERATOR(op) (op == '+' || op == '-' || op == 'x' || op == '/' || op == '=')
+#define ALL_CHARACTERS_NOT_NUMBERS(cn) (cn == ',' || cn == '+' || cn == '-' || cn == 'x' || cn == '/' || cn == '%' || cn == '=')
 
 
 // Assets
@@ -85,3 +87,4 @@ void defineLoop(int *startX_enter);
 void drawClearDisplay();
 void clearVariable(char *display);
 void handleC(int *startX_enter, int *countNumberBeingTyped, int *result);
+bool errorMessageOfLength(int *startX_enter);
