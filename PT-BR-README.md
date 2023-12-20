@@ -1,5 +1,5 @@
 # Idiomas
-- [Inglês](https://github.com/gabrielcamarate/Calculadora-Interativa/tree/main/EN-README.md)
+- [Inglês](https://github.com/gabrielcamarate/Calculadora-Interativa/tree/main/README.md)
 
 
 # Calculadora Interativa em C
