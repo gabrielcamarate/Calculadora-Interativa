@@ -1,3 +1,7 @@
+# Idiomas
+- [Inglês](https://github.com/gabrielcamarate/Calculadora-Interativa/tree/main/EN-README.md)
+
+
 # Calculadora Interativa em C
 Gostaria de apresentar o código-fonte da calculadora em linguagem C, desenvolvida como parte de um projeto para uma disciplina da faculdade.
 
