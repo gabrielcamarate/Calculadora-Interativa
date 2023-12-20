@@ -1,5 +1,5 @@
 # Languages
-- [Português](https://github.com/gabrielcamarate/Calculadora-Interativa/tree/main/README.md)
+- [Português](https://github.com/gabrielcamarate/Calculadora-Interativa/tree/main/PT-BR-README.md)
 
 # Interactive Calculator in C
 I would like to present the source code of a C language calculator, developed as part of a project for a college course.
