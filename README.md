@@ -3,21 +3,18 @@ Gostaria de apresentar o código-fonte da calculadora em linguagem C, desenvolvi
 
 Esta calculadora possui uma interface de usuário interativa, baseada em terminal, implementada usando a biblioteca NCurses. 
 
-Aqui estão alguns dos principais aspectos do código: 
-
+### Aqui estão alguns dos principais aspectos do código: 
 - Interface Gráfica: Utilização da biblioteca NCurses para criar uma interface interativa no terminal. 
-
 - Implementação de botões para os dígitos de 0 a 9
 - Operadores Aritméticos: Soma, subtração, divisão e multiplicação 
 - Ponto decimal
 - Tecla de igual (=) e comandos adicionais como limpar tela (C) e apagar último caractere (<)
-###
 - Implementação de funções para executar as operações matemáticas
 - Controle de Entrada do Usuário 
 - Manipulação de eventos de teclado para interação do usuário. 
 - Tratamento de entrada para garantir a validade das operações e prevenir erros. 
 
-## Recursos Adicionais:
+### Recursos Adicionais:
 
 - Capacidade de limpar a tela e apagar o último caractere digitado. 
 
