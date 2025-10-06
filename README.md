@@ -1,43 +1,102 @@
-# Languages
-- [Portuguese](https://github.com/gabrielcamarate/Calculadora-Interativa/tree/main/PT-BR-README.md)
+# 🧮 Interactive Calculator - C Language
 
-# Interactive Calculator in C
-I would like to present the source code of a C language calculator, developed as part of a project for a college course.
+Modern and robust interactive calculator with terminal-based GUI using NCurses library.
 
-This calculator features an interactive user interface based on the terminal, implemented using the NCurses library.
+[🇺🇸 English Version](README.md) | [🇧🇷 Versão em Português](PT-BR-README.md)
 
-Here are some key aspects of the code:
+![GitHub language count](https://img.shields.io/github/languages/count/gabrielcamarate/Calculadora-Interativa)
 
-- Graphical Interface: Utilization of the NCurses library to create an interactive interface in the terminal.
+<br>
 
-- Implementation of buttons for digits 0 to 9
-- Arithmetic Operators: Addition, subtraction, division, and multiplication
-- Decimal point
-- Equal (=) key and additional commands such as clear screen (C) and delete last character (<)
-###
-- Implementation of functions to perform mathematical operations
-- User Input Control
-- Handling keyboard events for user interaction.
-- Input validation to ensure the validity of operations and prevent errors.
+<p align="center">
+  <!-- Add your project preview image below -->
+  <img src="images/preview.png" alt="Project Preview"/>
+</p>
 
-## Additional Features:
+<br>
 
-- Ability to clear the screen and delete the last entered character.
+## 📋 Table of Contents
 
-### Code Organization:
+* [About](#-about)
+* [Technologies Used](#-technologies-used)
+* [How to Run](#-how-to-run)
+* [License](#-license)
+* [Contact](#-contact)
 
-- Modular structure with specific functions for different aspects of the application.
-- Use of C programming practices such as dynamic memory allocation, string manipulation, and control structures.
+<br>
 
-### NOTES:
-- The calculator still has some bugs as I haven't had time to finalize it!
-- The calculator is functional only for the LINUX terminal version!
+## 📖 About
 
-***Creation for Windows terminal in progress***
+**Interactive Calculator in C** is a terminal-based calculator application developed as part of a college course project. It features an interactive user interface implemented using the NCurses library, providing a graphical calculator experience in the terminal environment.
 
-- Approximately 14 days were spent in total to complete version 1.0 of this project, from ideation, scoping, and production!
+**Key features:**
+*   **Graphical Interface (NCurses):** Interactive terminal interface with visual buttons and display.
+*   **Mathematical Operations:** Addition, subtraction, multiplication, and division.
+*   **User Input Control:** Keyboard event handling for user interaction.
+*   **Input Validation:** Ensures operation validity and prevents errors.
+*   **Screen Management:** Clear screen and delete last character functionality.
+*   **Modular Structure:** Well-organized code with specific functions for different aspects.
+*   **Memory Management:** Dynamic memory allocation and string manipulation.
 
-### Acknowledgments
-I appreciate the opportunity to present this work and am available to clarify any doubts or provide more information about specific parts of the code.
+<br>
 
-#### Thank you for your attention!
+## 💻 Technologies Used
+
+- C Programming Language
+- NCurses Library
+- Linux Terminal
+- Dynamic Memory Allocation
+- String Manipulation
+
+<br>
+
+## 🛡️ Robustness and Best Practices
+
+- The system uses dynamic memory allocation to manage strings and data.
+- Input validation ensures valid mathematical operations.
+- Error handling for memory allocation failures.
+- Modular interface with specific functions for different features.
+- Terminal color support when available.
+
+## 🚀 How to Run
+
+```bash
+# Clone this repository
+$ git clone https://github.com/gabrielcamarate/Calculadora-Interativa.git
+
+# Enter the project folder
+$ cd Calculadora-Interativa
+
+# Compile the project
+$ make
+```
+
+To run the calculator:
+
+```bash
+./calculadora
+```
+
+To clean compiled files:
+
+```bash
+make clean
+```
+
+> **Note:** This calculator is currently functional only for Linux terminal. Windows terminal version is in development.
+
+<br>
+
+## 📝 License
+
+This project is private and for restricted use. Distribution, modification, or commercial use is not permitted without explicit authorization from the author.
+
+<br>
+
+## 📬 Contact
+
+Made with ❤️ by Gabriel Camarate. Get in touch!
+
+[![LinkedIn](https://img.shields.io/badge/linkedin-%230077B5.svg?style=for-the-badge&logo=linkedin&logoColor=white)](https://www.linkedin.com/in/gabrielcamarate/)
+[![Gmail](https://img.shields.io/badge/EMAIL-D14836?style=for-the-badge&logo=gmail&logoColor=white)](mailto:gabrielcamarate@icloud.com)
+[![GitHub](https://img.shields.io/badge/github-%23121011.svg?style=for-the-badge&logo=github&logoColor=white)](https://github.com/gabrielcamarate)

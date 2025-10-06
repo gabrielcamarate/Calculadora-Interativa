@@ -51,6 +51,7 @@ void indexPosition(int *startX_enter);
 void showTerminalColorError();
 char *allocateMemory();
 void initialize();
+void cleanup();
 
 
 // Criação das caixas

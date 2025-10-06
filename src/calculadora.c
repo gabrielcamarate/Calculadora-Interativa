@@ -1,4 +1,4 @@
-#include "calculadora.h"
+#include "../include/calculadora.h"
 #include <ctype.h>
 #include <locale.h>
 #include <ncurses.h>
@@ -35,8 +35,23 @@ char *buttons[BUTTON_ROWS][BUTTON_COLUMNS] = {
 // Variaveis principais
 WINDOW *calculatorCase;
 
+void cleanup()
+{
+    if (currentNumberBeingTyped != NULL) {
+        free(currentNumberBeingTyped);
+        currentNumberBeingTyped = NULL;
+    }
+    if (charactersDisplay != NULL) {
+        free(charactersDisplay);
+        charactersDisplay = NULL;
+    }
+}
+
 int main(int argc, char const *argv[])
 {
+    (void)argc;  // Evitar warning de parâmetro não utilizado
+    (void)argv;  // Evitar warning de parâmetro não utilizado
+    
     setlocale(LC_ALL, "");
     initialize();
 
@@ -44,6 +59,9 @@ int main(int argc, char const *argv[])
     charactersDisplay = allocateMemory();
 
     menuWindow();
+    
+    // Limpar memória antes de sair
+    cleanup();
     endwin();
 
     return 0;
@@ -110,17 +128,38 @@ void removeSpaces(char *originalString)
 
 void replace(char *characterDisplay)
 {
+    (void)characterDisplay; // Evitar warning de parâmetro não utilizado
+    
     int lengthChar = strlen(charactersDisplay);
-    char *temp = malloc(lengthChar * sizeof(char));
+    
+    // Verificar se há caracteres para remover
+    if (lengthChar <= 1) {
+        clearVariable(charactersDisplay);
+        mvwprintw(calculatorCase, 1, 1, " ");
+        mvwprintw(calculatorCase, 5, 1, " ");
+        return;
+    }
+    
+    char *temp = malloc((lengthChar + 1) * sizeof(char));
+    if (temp == NULL) {
+        showErrors("Memory allocation failure in replace function.");
+        return;
+    }
 
+    // Copiar todos os caracteres exceto o último
     for (int i = 0; i < lengthChar - 1; i++)
     {
         temp[i] = charactersDisplay[i];
     }
     temp[lengthChar - 1] = '\0';
+    
+    // Atualizar display
     mvwprintw(calculatorCase, 1, 1, "%s", temp);
-    strcpy(characterDisplay, temp);
-    mvwprintw(calculatorCase, 5, 1, "%s", characterDisplay);
+    strcpy(charactersDisplay, temp);
+    mvwprintw(calculatorCase, 5, 1, "%s", charactersDisplay);
+    
+    // Liberar memória
+    free(temp);
 }
 
 // Operações matematicas
@@ -145,7 +184,7 @@ void subtraction()
 void multiplication()
 {
     int number = atoi(currentNumberBeingTyped);
-    result = number * result;
+    result = result * number; // Corrigido: result * number (não number * result)
     clearVariable(currentNumberBeingTyped);
     countNumberBeingTyped = 0;
 }
@@ -153,6 +192,18 @@ void multiplication()
 void division()
 {
     int number = atoi(currentNumberBeingTyped);
+    
+    // Verificar divisão por zero
+    if (number == 0) {
+        // Mostrar erro na tela
+        drawClearDisplay();
+        mvwprintw(calculatorCase, 3, 5, "ERRO: DIVISAO POR ZERO");
+        wrefresh(calculatorCase);
+        clearVariable(currentNumberBeingTyped);
+        countNumberBeingTyped = 0;
+        return;
+    }
+    
     result = result / number;
     clearVariable(currentNumberBeingTyped);
     countNumberBeingTyped = 0;
@@ -294,11 +345,14 @@ bool errorMessageOfLength(int *startX_enter)
     drawClearDisplay();
     clearVariable(charactersDisplay);
     clearVariable(currentNumberBeingTyped);
-    for (int i = 0; i < 7; i++)
+    
+    // Preencher com zeros de forma segura
+    for (int i = 0; i < 7 && i < MAX_CHARACTERS - 1; i++)
     {
         currentNumberBeingTyped[i] = '0';
     }
-    currentNumberBeingTyped[8] = '\0';
+    currentNumberBeingTyped[7] = '\0'; // Corrigido: índice 7 em vez de 8
+    
     countNumberBeingTyped = 0;
     countCharactersDisplay = 0;
     (*startX_enter) = 30;
@@ -360,9 +414,12 @@ void drawClearDisplay()
 
 void clearVariable(char *display)
 {
-    for (int i = 0; i < strlen(display); i++)
+    if (display == NULL) return;
+    
+    int length = strlen(display);
+    for (int i = 0; i < length && i < MAX_CHARACTERS; i++)
     {
-        display[i] = ' ';
+        display[i] = '\0';
     }
 }
 
@@ -449,6 +506,8 @@ void processKeyClear(char character, int *startX_enter)
 
 void processOperationEquals(char operator)
 {
+    (void)operator; // Evitar warning de parâmetro não utilizado
+    
     switch (currentSelectedCharacterOperator)
     {
         case '+':
@@ -508,6 +567,8 @@ void equalRepeat(char tempCurrentSelectedCharacterOperator)
 
 void processOperations(char currentCharacter, int *startX_enter)
 {
+    (void)startX_enter; // Evitar warning de parâmetro não utilizado
+    
     int temp = strlen(charactersDisplay);
     for (int i = 0; i < temp; i++)
     {
