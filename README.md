@@ -10,7 +10,7 @@ Modern and robust interactive calculator with terminal-based GUI using NCurses l
 
 <p align="center">
   <!-- Add your project preview image below -->
-  <img src="images/preview.png" alt="Project Preview"/>
+  <img src="images/preview.gif" alt="Project Preview"/>
 </p>
 
 <br>

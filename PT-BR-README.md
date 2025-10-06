@@ -10,7 +10,7 @@ Calculadora moderna e robusta com interface gráfica baseada em terminal usando 
 
 <p align="center">
   <!-- Adicione sua imagem de preview do projeto abaixo -->
-  <img src="images/preview.png" alt="Preview do Projeto"/>
+  <img src="images/preview.gif" alt="Preview do Projeto"/>
 </p>
 
 <br>
